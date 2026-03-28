@@ -4,8 +4,8 @@ let bot;
 
 function createBot() {
   bot = mineflayer.createBot({
-    host: 'Modcraft-gYuZ.aternos.me',
-    port: 43889, // ✅ Replace with actual port number
+    host: 'Hshm.aternos.me',
+    port:16821, // ✅ Replace with actual port number
     username: 'aurora_assistant',
     version: '1.21.4'
   });

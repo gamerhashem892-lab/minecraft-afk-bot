@@ -2,10 +2,10 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-// --- [ 1. إعداد خادم الويب لضمان عمل البوت 24/7 ] ---
-// اربط رابط الـ Render الخاص بك في UptimeRobot بهذا المنفذ (3000)
+// --- [ 1. إعداد سيرفر الويب لمنع خطأ Not Found ] ---
 app.get('/', (req, res) => {
-  res.send('Hashem Super Bot is Running! 🚀');
+  // هذه الرسالة هي اللي بتطلع لك لما تفتح الرابط في المتصفح
+  res.send('<h1>Hashem Super Bot is Online! 🚀</h1><p>Bot is jumping in the server...</p>');
 });
 
 const port = process.env.PORT || 3000;
@@ -13,12 +13,12 @@ app.listen(port, () => {
   console.log(`Web server is listening on port ${port}`);
 });
 
-// --- [ 2. إعدادات بوت ماينكرافت الخاصة بك ] ---
+// --- [ 2. إعدادات بوت ماينكرافت ] ---
 const botArgs = {
   host: 'Hshm.aternos.me',    // رابط سيرفرك
-  port: 16821,               // البورت الخاص بك
+  port: 16821,               // البورت
   username: 'hashem_super_3', // اسم البوت
-  version: false             // false يخلي البوت يكتشف النسخة تلقائياً
+  version: false             // يكتشف النسخة تلقائياً
 };
 
 let bot;
@@ -28,9 +28,9 @@ function createBot() {
 
   // أول ما يدخل السيرفر يبدأ القفز
   bot.on('spawn', () => {
-    console.log('✅ البوت دخل السيرفر وبدأ القفز المستمر!');
+    console.log('✅ [Hashem Bot] دخل السيرفر وبدأ القفز!');
     
-    // وظيفة القفز (Jump) كل ثانية
+    // وظيفة القفز المستمر كل ثانية
     setInterval(() => {
       if (bot && bot.entity) {
         bot.setControlState('jump', true);
@@ -39,16 +39,17 @@ function createBot() {
     }, 1000); 
   });
 
-  // إعادة الاتصال التلقائي في حال الطرد أو توقف السيرفر
+  // إعادة الاتصال التلقائي إذا طردوه
   bot.on('end', () => {
-    console.log('⚠️ انقطع الاتصال! جاري محاولة الدخول مرة أخرى بعد 10 ثواني...');
+    console.log('⚠️ انقطع الاتصال! جاري العودة خلال 10 ثواني...');
     setTimeout(createBot, 10000); 
   });
 
-  // معالجة الأخطاء عشان الكود ما يوقف (Crash)
+  // منع الكود من التوقف عند حدوث خطأ تقني
   bot.on('error', (err) => {
-    console.log('❌ خطأ في البوت:', err.message);
+    console.log('❌ خطأ برميجي:', err.message);
   });
 }
 
+// تشغيل البوت
 createBot();

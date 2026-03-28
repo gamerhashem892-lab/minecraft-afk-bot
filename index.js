@@ -7,7 +7,7 @@ const SERVER_PORT = 16821;
 const VERSION = "1.21.1";
 
 const BOT_INFOS = [
-    { username: "Hashem_Super_1", joinDelay: 5000 },
+    { username: "Hashem_Super_3", joinDelay: 5000 },
 function createBot(info) {
     console.log(`📡 [${info.username}] جاري محاولة الدخول...`);
     

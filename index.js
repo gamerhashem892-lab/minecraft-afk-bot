@@ -1,69 +1,54 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
+const app = express();
 
-// إعدادات السيرفر
-const SERVER_HOST = "Hshm.aternos.me";
-const SERVER_PORT = 16821;
-const VERSION = "1.21.1";
+// --- [ 1. إعداد خادم الويب لضمان عمل البوت 24/7 ] ---
+// اربط رابط الـ Render الخاص بك في UptimeRobot بهذا المنفذ (3000)
+app.get('/', (req, res) => {
+  res.send('Hashem Super Bot is Running! 🚀');
+});
 
-const BOT_INFOS = [
-    { username: "Hashem_Super_3", joinDelay: 5000 },
-function createBot(info) {
-    console.log(`📡 [${info.username}] جاري محاولة الدخول...`);
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Web server is listening on port ${port}`);
+});
+
+// --- [ 2. إعدادات بوت ماينكرافت الخاصة بك ] ---
+const botArgs = {
+  host: 'Hshm.aternos.me',    // رابط سيرفرك
+  port: 16821,               // البورت الخاص بك
+  username: 'hashem_super_3', // اسم البوت
+  version: false             // false يخلي البوت يكتشف النسخة تلقائياً
+};
+
+let bot;
+
+function createBot() {
+  bot = mineflayer.createBot(botArgs);
+
+  // أول ما يدخل السيرفر يبدأ القفز
+  bot.on('spawn', () => {
+    console.log('✅ البوت دخل السيرفر وبدأ القفز المستمر!');
     
-    const bot = mineflayer.createBot({
-        host: SERVER_HOST,
-        port: SERVER_PORT,
-        username: info.username,
-        version: VERSION,
-        connectTimeout: 60000, // انتظر دقيقة كاملة قبل ما تفصل (حل الـ Timeout)
-    });
+    // وظيفة القفز (Jump) كل ثانية
+    setInterval(() => {
+      if (bot && bot.entity) {
+        bot.setControlState('jump', true);
+        bot.setControlState('jump', false);
+      }
+    }, 1000); 
+  });
 
-    // --- ميزة الحركة لمنع الطرد (Anti-AFK) ---
-    bot.on('spawn', () => {
-        console.log(`✅ كفووو! [${info.username}] دخل السيرفر.`);
-        
-        // خله يتحرك كل 60 ثانية حركة بسيطة
-        setInterval(() => {
-            const actions = ['forward', 'back', 'left', 'right'];
-            const randomAction = actions[Math.floor(Math.random() * actions.length)];
-            
-            bot.setControlState(randomAction, true);
-            setTimeout(() => {
-                bot.setControlState(randomAction, false);
-            }, 500); // يمشي نص ثانية بس
-            
-            bot.look(Math.random() * Math.PI * 2, 0); // يطالع لجهة عشوائية
-        }, 60000); 
-    });
+  // إعادة الاتصال التلقائي في حال الطرد أو توقف السيرفر
+  bot.on('end', () => {
+    console.log('⚠️ انقطع الاتصال! جاري محاولة الدخول مرة أخرى بعد 10 ثواني...');
+    setTimeout(createBot, 10000); 
+  });
 
-    bot.on('login', () => {
-        console.log(`📝 [${info.username}] تم تسجيل الدخول بنجاح`);
-    });
-
-    bot.on('error', (err) => {
-        console.log(`❌ [${info.username}] خطأ: ${err.message}`);
-    });
-
-    bot.on('end', () => {
-        console.log(`⚠️ [${info.username}] فصل الاتصال.. بحاول أرجع بعد 10 ثواني`);
-        setTimeout(() => createBot(info), 10000);
-    });
-
-    bot.on('kicked', (reason) => {
-        console.log(`🚫 [${info.username}] انطرد بسبب: ${reason}`);
-    });
-
-    return bot;
+  // معالجة الأخطاء عشان الكود ما يوقف (Crash)
+  bot.on('error', (err) => {
+    console.log('❌ خطأ في البوت:', err.message);
+  });
 }
 
-// السيرفر اللي يخلي الخدمة شغالة (Keep-alive)
-const app = express();
-app.get('/', (req, res) => res.send('<h1>BOTS ARE RUNNING! 🚀</h1>'));
-app.listen(process.env.PORT || 3000, () => {
-    console.log("🟢 GitHub Runner is Online!");
-    
-    BOT_INFOS.forEach(info => {
-        setTimeout(() => createBot(info), info.joinDelay);
-    });
-});
+createBot();

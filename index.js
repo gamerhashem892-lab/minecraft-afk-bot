@@ -1,96 +1,69 @@
 const mineflayer = require('mineflayer');
+const express = require('express');
 
-let bot;
+// إعدادات السيرفر
+const SERVER_HOST = "Hshm.aternos.me";
+const SERVER_PORT = 16821;
+const VERSION = "1.21.1";
 
-function createBot() {
-  bot = mineflayer.createBot({
-    host: 'Hshm.aternos.me',
-    port:16821, // ✅ Replace with actual port number
-    username: 'hashem_56',
-    version: '1.21.4'
-  });
+const BOT_INFOS = [
+    { username: "Hashem_Super_1", joinDelay: 5000 },
+function createBot(info) {
+    console.log(`📡 [${info.username}] جاري محاولة الدخول...`);
+    
+    const bot = mineflayer.createBot({
+        host: SERVER_HOST,
+        port: SERVER_PORT,
+        username: info.username,
+        version: VERSION,
+        connectTimeout: 60000, // انتظر دقيقة كاملة قبل ما تفصل (حل الـ Timeout)
+    });
 
-  bot.on('message', (message) => {
-    const msg = message.toString().toLowerCase();
+    // --- ميزة الحركة لمنع الطرد (Anti-AFK) ---
+    bot.on('spawn', () => {
+        console.log(`✅ كفووو! [${info.username}] دخل السيرفر.`);
+        
+        // خله يتحرك كل 60 ثانية حركة بسيطة
+        setInterval(() => {
+            const actions = ['forward', 'back', 'left', 'right'];
+            const randomAction = actions[Math.floor(Math.random() * actions.length)];
+            
+            bot.setControlState(randomAction, true);
+            setTimeout(() => {
+                bot.setControlState(randomAction, false);
+            }, 500); // يمشي نص ثانية بس
+            
+            bot.look(Math.random() * Math.PI * 2, 0); // يطالع لجهة عشوائية
+        }, 60000); 
+    });
 
-    if (msg.includes('/register')) {
-      bot.chat('/register Bot@12345 Bot@12345');
-    } else if (msg.includes('/login')) {
-      bot.chat('/login Bot@12345');
-    }
+    bot.on('login', () => {
+        console.log(`📝 [${info.username}] تم تسجيل الدخول بنجاح`);
+    });
 
-    if (
-      msg.includes('teleport to you') ||
-      msg.includes('teleport to them')
-    ) {
-      console.log('Teleport request detected! Accepting...');
-      bot.chat('/tpaccept');
-    }
-  });
+    bot.on('error', (err) => {
+        console.log(`❌ [${info.username}] خطأ: ${err.message}`);
+    });
 
-  bot.on('chat', (username, message) => {
-    if (username === bot.username) return;
-    const lower = message.toLowerCase();
+    bot.on('end', () => {
+        console.log(`⚠️ [${info.username}] فصل الاتصال.. بحاول أرجع بعد 10 ثواني`);
+        setTimeout(() => createBot(info), 10000);
+    });
 
-    if (lower.startsWith('!')) {
-      const args = lower.slice(1).split(' ');
-      const command = args.shift();
+    bot.on('kicked', (reason) => {
+        console.log(`🚫 [${info.username}] انطرد بسبب: ${reason}`);
+    });
 
-      switch (command) {
-        case 'help':
-          bot.chat(`Hi ${username}, I respond to hello, how are you, and commands like !help, !ping.`);
-          break;
-        case 'sunilgaming':
-          bot.chat(`Hey ${username}, sunilgaming created me!`);
-          break;
-        case 'ping':
-          bot.chat(`Pong, ${username}!`);
-          break;
-        default:
-          bot.chat(`Unknown command: ${command}`);
-      }
-    } else {
-      if (lower.includes('hello')) bot.chat(`Hi ${username}!`);
-      else if (lower.includes('how are you')) bot.chat(`I'm just a bot, but thanks for asking!`);
-    }
-  });
-
-  bot.on('whisper', (username, message) => {
-    if (username === bot.username) return;
-    console.log(`[Whisper] <${username}>: ${message}`);
-    bot.whisper(username, `Hello ${username}, I got your message!`);
-  });
-
-  function randomMovement() {
-    const directions = ['forward', 'back', 'left', 'right'];
-    const dir = directions[Math.floor(Math.random() * directions.length)];
-
-    bot.setControlState(dir, true);
-    setTimeout(() => {
-      bot.setControlState(dir, false);
-      setTimeout(randomMovement, 2000);
-    }, 3000);
-  }
-
-  bot.once('spawn', () => {
-    setTimeout(() => {
-      bot.chat('AFK bot online!');
-      randomMovement();
-    }, 1000);
-  });
-
-  bot.on('end', () => {
-    console.log('Bot disconnected. Reconnecting in 5 seconds...');
-    setTimeout(createBot, 5000);
-  });
-
-  bot.on('error', err => {
-    console.log('Bot error:', err);
-  });
-
-  bot.on('kicked', reason => {
-    console.log('Bot was kicked:', reason);
-  });
+    return bot;
 }
 
-createBot();
+// السيرفر اللي يخلي الخدمة شغالة (Keep-alive)
+const app = express();
+app.get('/', (req, res) => res.send('<h1>BOTS ARE RUNNING! 🚀</h1>'));
+app.listen(process.env.PORT || 3000, () => {
+    console.log("🟢 GitHub Runner is Online!");
+    
+    BOT_INFOS.forEach(info => {
+        setTimeout(() => createBot(info), info.joinDelay);
+    });
+});

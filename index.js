@@ -2,54 +2,45 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-// --- [ 1. إعداد سيرفر الويب لمنع خطأ Not Found ] ---
+// --- [ ميزة الاستيقاظ المستمر ] ---
 app.get('/', (req, res) => {
-  // هذه الرسالة هي اللي بتطلع لك لما تفتح الرابط في المتصفح
-  res.send('<h1>Hashem Super Bot is Online! 🚀</h1><p>Bot is jumping in the server...</p>');
+  res.send('Hashem Super Bot is Awake! 🚀');
+  console.log('✅ تم استقبال نبضة من UptimeRobot!');
 });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Web server is listening on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
 
-// --- [ 2. إعدادات بوت ماينكرافت ] ---
+// --- [ إعدادات البوت ] ---
 const botArgs = {
-  host: 'Hshm.aternos.me',    // رابط سيرفرك
-  port: 16821,               // البورت
-  username: 'hashem_super_3', // اسم البوت
-  version: false             // يكتشف النسخة تلقائياً
+  host: 'Hshm.aternos.me',
+  port: 16821,
+  username: 'hashem_super_3',
+  version: false
 };
 
-let bot;
-
 function createBot() {
-  bot = mineflayer.createBot(botArgs);
+  const bot = mineflayer.createBot(botArgs);
 
-  // أول ما يدخل السيرفر يبدأ القفز
   bot.on('spawn', () => {
-    console.log('✅ [Hashem Bot] دخل السيرفر وبدأ القفز!');
-    
-    // وظيفة القفز المستمر كل ثانية
+    console.log('✅ البوت في السيرفر الآن!');
     setInterval(() => {
-      if (bot && bot.entity) {
+      if (bot.entity) {
         bot.setControlState('jump', true);
         bot.setControlState('jump', false);
       }
-    }, 1000); 
+    }, 1000);
   });
 
-  // إعادة الاتصال التلقائي إذا طردوه
+  // إعادة تشغيل ذكية عند الفصل
   bot.on('end', () => {
-    console.log('⚠️ انقطع الاتصال! جاري العودة خلال 10 ثواني...');
-    setTimeout(createBot, 10000); 
+    console.log('⚠️ فصل البوت، إعادة محاولة بعد 5 ثواني...');
+    setTimeout(createBot, 5000);
   });
 
-  // منع الكود من التوقف عند حدوث خطأ تقني
-  bot.on('error', (err) => {
-    console.log('❌ خطأ برميجي:', err.message);
-  });
+  bot.on('error', (err) => console.log('Error:', err.message));
 }
 
-// تشغيل البوت
 createBot();

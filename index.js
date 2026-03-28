@@ -6,7 +6,7 @@ function createBot() {
   bot = mineflayer.createBot({
     host: 'Hshm.aternos.me',
     port:16821, // ✅ Replace with actual port number
-    username: 'aurora_assistant',
+    username: 'hashem_56',
     version: '1.21.4'
   });
 

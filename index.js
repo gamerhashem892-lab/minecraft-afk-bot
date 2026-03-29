@@ -2,58 +2,70 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => res.send('Bot is Synced with 1.21.11! 🚀'));
+app.get('/', (req, res) => res.send('Multi-Bots 1.21.11 are Online! 🚀'));
 app.listen(process.env.PORT || 3000);
 
-const botArgs = {
+const serverConfig = {
     host: 'Modcraft-gYuZ.aternos.me',
     port: 43889,
-    username: 'Hashem_Ultra_121', 
-    // حذفنا سطر النسخة عشان يكتشفها البوت تلقائياً (Auto-detect)
-    // وهذا أضمن حل لنسخة 1.21.11
-    checkTimeoutInterval: 60000
+    version: '1.21.1' 
 };
 
-function createBot() {
-    console.log(`📡 جاري محاولة الدخول والتحقق من نسخة السيرفر (1.21.11)...`);
+// قائمة البوتات (تقدر تضيف ثالث ورابع هنا)
+const botNames = ['Hashem_Ultra_1', 'Warrior_HSHM_2'];
 
-    const bot = mineflayer.createBot(botArgs);
+function createBot(name) {
+    console.log(`📡 [${name}] جاري محاولة الاتصال...`);
+
+    const bot = mineflayer.createBot({
+        host: serverConfig.host,
+        port: serverConfig.port,
+        username: name,
+        version: serverConfig.version,
+        checkTimeoutInterval: 60000
+    });
 
     let isRestarting = false;
 
     bot.on('spawn', () => {
-        console.log(`✅ كفووو! دخلنا 1.21.11 بنجاح.`);
-        isRestarting = false;
-        
-        // تمويه ذكي: قفز وحركة خفيفة كل 20 ثانية
-        setInterval(() => {
-            if (bot.entity) {
-                bot.setControlState('jump', true);
-                setTimeout(() => bot.setControlState('jump', false), 500);
-                bot.look(bot.entity.yaw + 0.1, 0);
-            }
-        }, 20000);
+        console.log(`✅ [${bot.username}] دخل السيرفر بنجاح!`);
+        bot.clearControlStates();
+
+        // نظام الانتظار والتمويه (15 ثانية هدوء)
+        setTimeout(() => {
+            console.log(`⚙️ [${bot.username}] بدأ نظام التمويه...`);
+            setInterval(() => {
+                if (bot.entity) {
+                    // دوران الرأس فقط لمنع الـ Invalid Move
+                    bot.look(bot.entity.yaw + 0.2, 0);
+                    // قفزة كل 45 ثانية
+                    bot.setControlState('jump', true);
+                    setTimeout(() => bot.setControlState('jump', false), 500);
+                }
+            }, 45000);
+        }, 15000);
     });
 
     bot.on('end', (reason) => {
-        console.log(`⚠️ السيرفر طردنا (السبب: ${reason}). بننتظر دقيقة ونرجع.`);
+        console.log(`⚠️ [${name}] انفصل: ${reason}`);
         if (!isRestarting) {
             isRestarting = true;
-            bot.removeAllListeners();
-            setTimeout(createBot, 60000);
+            setTimeout(() => createBot(name), 60000);
         }
     });
 
     bot.on('error', (err) => {
-        console.log(`❌ خطأ تقني: ${err.code}`);
-        if (err.code === 'ECONNRESET') {
-            console.log("حظر آي بي مؤقت من أترنوس.. بنبرد 3 دقائق.");
-            if (!isRestarting) {
-                isRestarting = true;
-                setTimeout(createBot, 180000); 
-            }
+        console.log(`❌ [${name}] خطأ: ${err.code}`);
+        if (err.code === 'ECONNRESET' && !isRestarting) {
+            isRestarting = true;
+            setTimeout(() => createBot(name), 180000);
         }
     });
 }
 
-createBot();
+// تشغيل البوتات بفرق زمني (دقيقة بين كل بوت)
+botNames.forEach((name, index) => {
+    setTimeout(() => {
+        createBot(name);
+    }, index * 60000); 
+});

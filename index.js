@@ -2,42 +2,62 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-// تشغيل سيرفر بسيط عشان المنصة ما تطفيه
-app.get('/', (req, res) => res.send('Bots are Running! 🚀'));
+app.get('/', (req, res) => res.send('Bot Version 1.21.11 is Running! ✅'));
 app.listen(process.env.PORT || 3000);
 
-const botConfigs = [
-  { name: 'Hashem_Pro_1', delay: 0 },       // البوت الأول يدخل فوراً
-  { name: 'Warrior_HSHM_2', delay: 45000 } // البوت الثاني بعد 45 ثانية
-];
+const host = 'Modcraft-gYuZ.aternos.me';
+const port = 43889;
+const version = '1.21.1'; // تم التعديل للنسخة المطلوبة
 
-function createBot(name, delay) {
-  setTimeout(() => {
+function createBot(name) {
+    console.log(`📡 [${name}] جاري محاولة الدخول بنسخة 1.21.1...`);
+
     const bot = mineflayer.createBot({
-      host: 'Modcraft-gYuZ.aternos.me', // ⚠️ لا تنسى تغيره لعنوان سيرفرك
-      port: 43889,
-      username: name,
-      version: '1.20.1' // ⚠️ تأكد إن النسخة مطابقة لسيرفرك
+        host: host,
+        port: port,
+        username: name,
+        version: version, // مهم جداً التوافق هنا
+        checkTimeoutInterval: 60000
     });
+
+    // لتجنب تداخل المحاولات
+    let isRestarting = false;
 
     bot.on('spawn', () => {
-      console.log(`✅ [${name}] دخل السيرفر.. كفووو!`);
-      // حركة عشوائية عشان أترنوس ما يطفيه
-      setInterval(() => {
-        bot.setControlState('jump', true);
-        setTimeout(() => bot.setControlState('jump', false), 500);
-      }, 15000); 
+        console.log(`✅ [${name}] دخل وثبت! كفووو يا هاشم.`);
+        isRestarting = false;
+        
+        // تمويه أترنوس بالحركة
+        setInterval(() => {
+            if (bot.entity) {
+                bot.setControlState('jump', true);
+                setTimeout(() => bot.setControlState('jump', false), 500);
+                // التفات بسيط
+                bot.look(bot.entity.yaw + 0.5, 0);
+            }
+        }, 20000);
     });
 
-    bot.on('end', () => {
-      console.log(`⚠️ [${name}] فصل.. بننتظر دقيقة ونرجع!`);
-      setTimeout(() => createBot(name, 0), 60000); // ينتظر دقيقة قبل الرجوع
+    bot.on('end', (reason) => {
+        console.log(`⚠️ فصل بسبب: ${reason}. بننتظر دقيقة.`);
+        if (!isRestarting) {
+            isRestarting = true;
+            bot.removeAllListeners();
+            setTimeout(() => createBot(name), 60000);
+        }
     });
 
-    bot.on('error', (err) => console.log(`❌ خطأ في ${name}: ${err.message}`));
-
-  }, delay);
+    bot.on('error', (err) => {
+        console.log(`❌ خطأ: ${err.code}`);
+        if (err.code === 'ECONNRESET') {
+            console.log("حظر آي بي مؤقت.. بنهجد دقيقتين.");
+            if (!isRestarting) {
+                isRestarting = true;
+                setTimeout(() => createBot(name), 120000);
+            }
+        }
+    });
 }
 
-// البدء بتشغيل البوتات
-botConfigs.forEach(config => createBot(config.name, config.delay));
+// ابدأ ببوت واحد للتجربة وضمان الاستقرار
+createBot('Hashem_121_V1');

@@ -2,45 +2,42 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-// --- [ ميزة الاستيقاظ المستمر ] ---
-app.get('/', (req, res) => {
-  res.send('Hashem Super Bot is Awake! 🚀');
-  console.log('✅ تم استقبال نبضة من UptimeRobot!');
-});
+// تشغيل سيرفر بسيط عشان المنصة ما تطفيه
+app.get('/', (req, res) => res.send('Bots are Running! 🚀'));
+app.listen(process.env.PORT || 3000);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+const botConfigs = [
+  { name: 'Hashem_Pro_1', delay: 0 },       // البوت الأول يدخل فوراً
+  { name: 'Warrior_HSHM_2', delay: 45000 } // البوت الثاني بعد 45 ثانية
+];
 
-// --- [ إعدادات البوت ] ---
-const botArgs = {
-  host: 'Hshm.aternos.me',
-  port: 16821,
-  username: 'hashem_super_3',
-  version: false
-};
+function createBot(name, delay) {
+  setTimeout(() => {
+    const bot = mineflayer.createBot({
+      host: 'اسم_سيرفرك.aternos.me', // ⚠️ لا تنسى تغيره لعنوان سيرفرك
+      port: 25565,
+      username: name,
+      version: '1.20.1' // ⚠️ تأكد إن النسخة مطابقة لسيرفرك
+    });
 
-function createBot() {
-  const bot = mineflayer.createBot(botArgs);
-
-  bot.on('spawn', () => {
-    console.log('✅ البوت في السيرفر الآن!');
-    setInterval(() => {
-      if (bot.entity) {
+    bot.on('spawn', () => {
+      console.log(`✅ [${name}] دخل السيرفر.. كفووو!`);
+      // حركة عشوائية عشان أترنوس ما يطفيه
+      setInterval(() => {
         bot.setControlState('jump', true);
-        bot.setControlState('jump', false);
-      }
-    }, 1000);
-  });
+        setTimeout(() => bot.setControlState('jump', false), 500);
+      }, 15000); 
+    });
 
-  // إعادة تشغيل ذكية عند الفصل
-  bot.on('end', () => {
-    console.log('⚠️ فصل البوت، إعادة محاولة بعد 5 ثواني...');
-    setTimeout(createBot, 5000);
-  });
+    bot.on('end', () => {
+      console.log(`⚠️ [${name}] فصل.. بننتظر دقيقة ونرجع!`);
+      setTimeout(() => createBot(name, 0), 60000); // ينتظر دقيقة قبل الرجوع
+    });
 
-  bot.on('error', (err) => console.log('Error:', err.message));
+    bot.on('error', (err) => console.log(`❌ خطأ في ${name}: ${err.message}`));
+
+  }, delay);
 }
 
-createBot();
+// البدء بتشغيل البوتات
+botConfigs.forEach(config => createBot(config.name, config.delay));

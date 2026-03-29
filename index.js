@@ -14,8 +14,8 @@ const botConfigs = [
 function createBot(name, delay) {
   setTimeout(() => {
     const bot = mineflayer.createBot({
-      host: 'اسم_سيرفرك.aternos.me', // ⚠️ لا تنسى تغيره لعنوان سيرفرك
-      port: 25565,
+      host: 'Hshm.aternos.me', // ⚠️ لا تنسى تغيره لعنوان سيرفرك
+      port: 16821,
       username: name,
       version: '1.20.1' // ⚠️ تأكد إن النسخة مطابقة لسيرفرك
     });

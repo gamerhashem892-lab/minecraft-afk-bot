@@ -1,6 +1,6 @@
 {
-  "name": "modcraft-multi-bot-1-21-11",
-  "version": "2.6.0",
+  "name": "modcraft-bot-multi-1-21-11",
+  "version": "3.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

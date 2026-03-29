@@ -1,16 +1,14 @@
 {
-  "name": "hashem-bot-1-21-11",
-  "version": "3.5.0",
-  "description": "Stable Multi-Bot for Minecraft 1.21.11",
+  "name": "bot-fixed-1-21-11",
+  "version": "5.0.0",
+  "description": "Final Force Update",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "engines": {
-    "node": "22.x"
-  },
   "dependencies": {
     "mineflayer": "4.22.0",
+    "minecraft-protocol": "1.52.0",
     "express": "4.18.2"
   }
 }

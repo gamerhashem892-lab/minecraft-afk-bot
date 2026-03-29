@@ -1,16 +1,15 @@
 {
-  "name": "hashem-bot",
-  "version": "1.0.0",
-  "description": "",
+  "name": "minecraft-multi-bot",
+  "version": "1.1.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "mineflayer": "^4.20.0",
     "express": "^4.18.2"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

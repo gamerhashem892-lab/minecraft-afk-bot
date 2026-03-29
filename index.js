@@ -2,70 +2,64 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => res.send('Multi-Bots 1.21.11 are Online! 🚀'));
+app.get('/', (req, res) => res.send('Multi-Bots for 1.21.11 are Synced! 🚀'));
 app.listen(process.env.PORT || 3000);
 
-const serverConfig = {
-    host: 'Modcraft-gYuZ.aternos.me',
-    port: 43889,
-    version: '1.21.1' 
-};
+const host = 'Modcraft-gYuZ.aternos.me';
+const port = 43889;
 
-// قائمة البوتات (تقدر تضيف ثالث ورابع هنا)
-const botNames = ['Hashem_Ultra_1', 'Warrior_HSHM_2'];
+// قائمة بأسماء البوتات
+const names = ['Hashem_U_1', 'Warrior_H_2'];
 
-function createBot(name) {
-    console.log(`📡 [${name}] جاري محاولة الاتصال...`);
+function startBot(username) {
+    console.log(`📡 [${username}] جاري محاولة الدخول والاكتشاف التلقائي لنسخة 1.21.11...`);
 
     const bot = mineflayer.createBot({
-        host: serverConfig.host,
-        port: serverConfig.port,
-        username: name,
-        version: serverConfig.version,
+        host: host,
+        port: port,
+        username: username,
+        // شلنا تحديد النسخة يدويًا عشان يكتشف 1.21.11 تلقائيًا
         checkTimeoutInterval: 60000
     });
 
-    let isRestarting = false;
+    let reconnecting = false;
 
     bot.on('spawn', () => {
-        console.log(`✅ [${bot.username}] دخل السيرفر بنجاح!`);
+        console.log(`✅ [${bot.username}] دخل بنجاح وتوافق مع نسخة السيرفر!`);
         bot.clearControlStates();
 
-        // نظام الانتظار والتمويه (15 ثانية هدوء)
+        // نظام الـ 15 ثانية هدوء عشان ما يطردك أترنوس (Invalid Move)
         setTimeout(() => {
-            console.log(`⚙️ [${bot.username}] بدأ نظام التمويه...`);
+            console.log(`⚙️ [${bot.username}] بدأ التمويه الهادئ...`);
             setInterval(() => {
                 if (bot.entity) {
-                    // دوران الرأس فقط لمنع الـ Invalid Move
-                    bot.look(bot.entity.yaw + 0.2, 0);
-                    // قفزة كل 45 ثانية
+                    // دوران الرأس + قفزة بسيطة
+                    bot.look(bot.entity.yaw + 0.3, 0);
                     bot.setControlState('jump', true);
                     setTimeout(() => bot.setControlState('jump', false), 500);
                 }
-            }, 45000);
+            }, 35000);
         }, 15000);
     });
 
     bot.on('end', (reason) => {
-        console.log(`⚠️ [${name}] انفصل: ${reason}`);
-        if (!isRestarting) {
-            isRestarting = true;
-            setTimeout(() => createBot(name), 60000);
+        console.log(`⚠️ [${username}] فصل: ${reason}`);
+        if (!reconnecting) {
+            reconnecting = true;
+            setTimeout(() => startBot(username), 60000);
         }
     });
 
     bot.on('error', (err) => {
-        console.log(`❌ [${name}] خطأ: ${err.code}`);
-        if (err.code === 'ECONNRESET' && !isRestarting) {
-            isRestarting = true;
-            setTimeout(() => createBot(name), 180000);
+        console.log(`❌ [${username}] خطأ: ${err.code}`);
+        if (err.code === 'ECONNRESET' && !reconnecting) {
+            reconnecting = true;
+            setTimeout(() => startBot(username), 180000);
         }
     });
 }
 
-// تشغيل البوتات بفرق زمني (دقيقة بين كل بوت)
-botNames.forEach((name, index) => {
-    setTimeout(() => {
-        createBot(name);
-    }, index * 60000); 
+// تشغيل البوتات بفاصل دقيقة
+names.forEach((name, index) => {
+    setTimeout(() => startBot(name), index * 60000);
 });

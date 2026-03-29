@@ -1,7 +1,6 @@
 {
-  "name": "minecraft-bot-1-21-11",
-  "version": "2.0.0",
-  "description": "Stable bot for Minecraft 1.21.11",
+  "name": "modcraft-multi-bot-1-21-11",
+  "version": "2.6.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

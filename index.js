@@ -7,7 +7,7 @@ app.listen(process.env.PORT || 3000);
 
 const host = 'Modcraft-gYuZ.aternos.me';
 const port = 43889;
-const version = '1.21.1'; // تم التعديل للنسخة المطلوبة
+const version = '1.21.11'; // تم التعديل للنسخة المطلوبة
 
 function createBot(name) {
     console.log(`📡 [${name}] جاري محاولة الدخول بنسخة 1.21.1...`);

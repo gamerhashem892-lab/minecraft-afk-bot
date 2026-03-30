@@ -2,64 +2,41 @@ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => res.send('Multi-Bots for 1.21.11 are Synced! 🚀'));
+app.get('/', (req, res) => res.send('Testing Stability...'));
 app.listen(process.env.PORT || 3000);
 
-const host = 'Quz774.aternos.me';
-const port = 11891;
+const config = {
+    host: 'hshm.aternos.me',
+    port: 16821,
+    version: '1.21.1'
+};
 
-// قائمة بأسماء البوتات
-const names = ['Hashem_U_1', 'Warrior_H_2'];
-
-function startBot(username) {
-    console.log(`📡 [${username}] جاري محاولة الدخول والاكتشاف التلقائي لنسخة 1.21.11...`);
+function startBot(name) {
+    console.log(`📡 محاولة دخول هادئة لـ [${name}]...`);
 
     const bot = mineflayer.createBot({
-        host: host,
-        port: port,
-        username: username,
-        // شلنا تحديد النسخة يدويًا عشان يكتشف 1.21.11 تلقائيًا
-        checkTimeoutInterval: 60000
+        host: config.host,
+        port: config.port,
+        username: name,
+        version: config.version,
+        // ⚠️ تعطيل كل شيء قد يسبب طرد
+        physicsEnabled: false, 
+        loadInternalPlugins: false 
     });
 
-    let reconnecting = false;
-
     bot.on('spawn', () => {
-        console.log(`✅ [${bot.username}] دخل بنجاح وتوافق مع نسخة السيرفر!`);
-        bot.clearControlStates();
-
-        // نظام الـ 15 ثانية هدوء عشان ما يطردك أترنوس (Invalid Move)
-        setTimeout(() => {
-            console.log(`⚙️ [${bot.username}] بدأ التمويه الهادئ...`);
-            setInterval(() => {
-                if (bot.entity) {
-                    // دوران الرأس + قفزة بسيطة
-                    bot.look(bot.entity.yaw + 0.3, 0);
-                    bot.setControlState('jump', true);
-                    setTimeout(() => bot.setControlState('jump', false), 500);
-                }
-            }, 35000);
-        }, 15000);
+        console.log(`✅ [${name}] داخل السيرفر الآن. لا تلمس أي شيء!`);
     });
 
     bot.on('end', (reason) => {
-        console.log(`⚠️ [${username}] فصل: ${reason}`);
-        if (!reconnecting) {
-            reconnecting = true;
-            setTimeout(() => startBot(username), 60000);
-        }
+        console.log(`⚠️ [${name}] فصل بسبب: ${reason}`);
+        setTimeout(() => startBot(name), 30000); // محاولة بعد 30 ثانية
     });
 
     bot.on('error', (err) => {
-        console.log(`❌ [${username}] خطأ: ${err.code}`);
-        if (err.code === 'ECONNRESET' && !reconnecting) {
-            reconnecting = true;
-            setTimeout(() => startBot(username), 180000);
-        }
+        console.log(`❌ [${name}] خطأ: ${err.message}`);
     });
 }
 
-// تشغيل البوتات بفاصل دقيقة
-names.forEach((name, index) => {
-    setTimeout(() => startBot(name), index * 60000);
-});
+// ابدأ ببوت واحد فقط للتجربة
+startBot('Hshm_Test_99');

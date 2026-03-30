@@ -5,8 +5,8 @@ const app = express();
 app.get('/', (req, res) => res.send('Multi-Bots for 1.21.11 are Synced! 🚀'));
 app.listen(process.env.PORT || 3000);
 
-const host = 'Hshm.aternos.me';
-const port = 16821;
+const host = 'Quz774.aternos.me';
+const port = 11891;
 
 // قائمة بأسماء البوتات
 const names = ['Hashem_U_1', 'Warrior_H_2'];

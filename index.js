@@ -1,42 +1,42 @@
-const mineflayer = require('mineflayer');
+ const mineflayer = require('mineflayer');
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => res.send('Testing Stability...'));
+app.get('/', (req, res) => res.send('Bot System 1.21.11 is Online ✅'));
 app.listen(process.env.PORT || 3000);
 
-const config = {
-    host: 'hshm.aternos.me',
-    port: 16821,
-    version: '1.21.1'
-};
+const host = 'hshm.aternos.me';
+const port = 16821;
 
-function startBot(name) {
-    console.log(`📡 محاولة دخول هادئة لـ [${name}]...`);
+function createBot(username) {
+    console.log(`📡 محاولة تشغيل [${username}]...`);
 
     const bot = mineflayer.createBot({
-        host: config.host,
-        port: config.port,
-        username: name,
-        version: config.version,
-        // ⚠️ تعطيل كل شيء قد يسبب طرد
-        physicsEnabled: false, 
-        loadInternalPlugins: false 
+        host: host,
+        port: port,
+        username: username,
+        version: '1.21.1', // هذا الرقم هو المعرف البرمجي لـ 1.21.11
+        checkTimeoutInterval: 60000
+    });
+
+    // منع انهيار البرنامج (Anti-Crash)
+    bot.on('error', (err) => {
+        console.log(`❌ خطأ في بوت [${username}]: ${err.message}`);
     });
 
     bot.on('spawn', () => {
-        console.log(`✅ [${name}] داخل السيرفر الآن. لا تلمس أي شيء!`);
+        console.log(`✅ [${username}] دخل وتمركز بنجاح.`);
+        bot.clearControlStates();
     });
 
     bot.on('end', (reason) => {
-        console.log(`⚠️ [${name}] فصل بسبب: ${reason}`);
-        setTimeout(() => startBot(name), 30000); // محاولة بعد 30 ثانية
-    });
-
-    bot.on('error', (err) => {
-        console.log(`❌ [${name}] خطأ: ${err.message}`);
+        console.log(`⚠️ [${username}] فصل (السبب: ${reason}). إعادة تشغيل بعد 60 ثانية...`);
+        setTimeout(() => createBot(username), 60000);
     });
 }
 
-// ابدأ ببوت واحد فقط للتجربة
-startBot('Hshm_Test_99');
+// تشغيل البوتات بفرق زمني
+const names = ['Hshm_Ultra_1', 'Hshm_Ultra_2'];
+names.forEach((name, i) => {
+    setTimeout(() => createBot(name), i * 30000);
+});

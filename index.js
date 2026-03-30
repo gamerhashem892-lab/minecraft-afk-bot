@@ -1,42 +1,44 @@
- const mineflayer = require('mineflayer');
-const express = require('express');
-const app = express();
+ const mineflayer = require('mineflayer')
 
-app.get('/', (req, res) => res.send('Bot System 1.21.11 is Online ✅'));
-app.listen(process.env.PORT || 3000);
-
-const host = '46.224.7.62';
-const port = 25801;
-
-function createBot(username) {
-    console.log(`📡 محاولة تشغيل [${username}]...`);
-
-    const bot = mineflayer.createBot({
-        host: host,
-        port: port,
-        username: username,
-        version: '1.21.1', // هذا الرقم هو المعرف البرمجي لـ 1.21.11
-        checkTimeoutInterval: 60000
-    });
-
-    // منع انهيار البرنامج (Anti-Crash)
-    bot.on('error', (err) => {
-        console.log(`❌ خطأ في بوت [${username}]: ${err.message}`);
-    });
-
-    bot.on('spawn', () => {
-        console.log(`✅ [${username}] دخل وتمركز بنجاح.`);
-        bot.clearControlStates();
-    });
-
-    bot.on('end', (reason) => {
-        console.log(`⚠️ [${username}] فصل (السبب: ${reason}). إعادة تشغيل بعد 60 ثانية...`);
-        setTimeout(() => createBot(username), 60000);
-    });
+const botArgs = {
+  host: '46.224.7.62',
+  port: 25801,
+  username: 'Warrior_H_2', // تقدر تغير الاسم للي تحب
+  version: '1.21.1',     // تأكد إنها نفس نسخة السيرفر الجديد
+  auth: 'offline'        // بما أنه سيرفر شخصي فغالباً مكرك
 }
 
-// تشغيل البوتات بفرق زمني
-const names = ['Hshm_Ultra_1', 'Hshm_Ultra_2'];
-names.forEach((name, i) => {
-    setTimeout(() => createBot(name), i * 30000);
-});
+let bot
+
+function createBot() {
+  bot = mineflayer.createBot(botArgs)
+
+  bot.on('spawn', () => {
+    console.log('✅ البوت دخل السيرفر الجديد بنجاح!')
+  })
+
+  // إذا انطرد أو فصل السيرفر
+  bot.on('end', () => {
+    console.log('⚠️ فصل الاتصال، جاري إعادة المحاولة بعد 10 ثواني...')
+    setTimeout(createBot, 10000)
+  })
+
+  // حل مشكلة الكراش أو الخطأ اللي طلع لك (Timeout)
+  bot.on('error', (err) => {
+    if (err.code === 'ETIMEDOUT') {
+      console.log('❌ السيرفر لا يستجيب (Timeout)، قد يكون طافي.')
+    } else {
+      console.log('❌ حدث خطأ: ', err.message)
+    }
+  })
+
+  // رد بسيط عشان تتأكد إنه شغال
+  bot.on('chat', (username, message) => {
+    if (username === bot.username) return
+    if (message === '!status') {
+      bot.chat('أنا شغال وأموري تمام!')
+    }
+  })
+}
+
+createBot()

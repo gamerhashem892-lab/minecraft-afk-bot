@@ -5,8 +5,8 @@ const app = express();
 app.get('/', (req, res) => res.send('Bot System 1.21.11 is Online ✅'));
 app.listen(process.env.PORT || 3000);
 
-const host = 'hshm.aternos.me';
-const port = 16821;
+const host = '46.224.7.62';
+const port = 25801;
 
 function createBot(username) {
     console.log(`📡 محاولة تشغيل [${username}]...`);

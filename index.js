@@ -15,13 +15,35 @@ function createBot(username) {
   bot.on('spawn', () => {
     console.log(`${username} اشتغل 🎮`);
 
-    // حركة عشوائية
+    // 🔥 حركة عشوائية (يمشي + يلف + أحياناً ينط)
     setInterval(() => {
       if (!bot.entity) return;
 
-      bot.setControlState('jump', true);
-      setTimeout(() => bot.setControlState('jump', false), 500);
-    }, 15000);
+      const actions = ['forward', 'back', 'left', 'right'];
+      const action = actions[Math.floor(Math.random() * actions.length)];
+
+      bot.clearControlStates(); // يوقف كل شي قبل
+
+      bot.setControlState(action, true);
+
+      // يلف عشوائي
+      bot.look(
+        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * Math.PI
+      );
+
+      // أحياناً ينط
+      if (Math.random() > 0.7) {
+        bot.setControlState('jump', true);
+        setTimeout(() => bot.setControlState('jump', false), 500);
+      }
+
+      // يوقف بعد شوي
+      setTimeout(() => {
+        bot.clearControlStates();
+      }, 2000);
+
+    }, 4000);
   });
 
   bot.on('end', () => {
@@ -43,6 +65,6 @@ function createBot(username) {
   });
 }
 
-// 🔥 هنا تشغل أكثر من بوت
-createBot('Bot1');
-createBot('Bot2');
+// 🔥 البوتات بالأسماء اللي طلبتها
+createBot('hashem_Admin-1');
+createBot('hashem_Admin-2');

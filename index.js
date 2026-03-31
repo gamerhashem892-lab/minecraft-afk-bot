@@ -1,45 +1,55 @@
 const mineflayer = require('mineflayer');
-const express = require('express');
-const app = express();
 
-app.get('/', (req, res) => res.send('Stealth Bot Status: Ready 🛡️'));
-app.listen(process.env.PORT || 3000);
+function createBot() {
+  const bot = mineflayer.createBot({
+    host: 'Hshm.aternos.me',
+    port: 16821,
+    username: 'BotAFK',
+    version: false
+  });
 
-const host = 'hshm.aternos.me';
-const port = 16821;
+  bot.on('login', () => {
+    console.log('دخل البوت ✅');
+  });
 
-function createBot(name) {
-    console.log(`📡 [${name}] محاولة دخول مخفية...`);
+  bot.on('spawn', () => {
+    console.log('اشتغل البوت 🎮');
 
-    const bot = mineflayer.createBot({
-        host: host,
-        port: port,
-        username: name,
-        version: '1.21.1',
-        // ⚠️ إعدادات منع الـ ECONNRESET
-        connectTimeout: 90000,
-        keepAlive: true,
-        checkTimeoutInterval: 120000
-    });
+    // حركة عشوائية كل شوي (عشان ما ينطرد)
+    setInterval(() => {
+      if (!bot.entity) return;
 
-    // منع الكراش عند حصول ECONNRESET
-    bot.on('error', (err) => {
-        if (err.code === 'ECONNRESET') {
-            console.log(`🚫 [${name}] أترنوس لا يزال يرفض الـ IP (ECONNRESET).`);
-        } else {
-            console.log(`❌ خطأ: ${err.message}`);
-        }
-    });
+      const yaw = Math.random() * Math.PI * 2;
+      bot.look(yaw, 0, true);
 
-    bot.on('spawn', () => {
-        console.log(`✅ [${name}] اخترق الحماية ودخل بنجاح!`);
-    });
+      bot.setControlState('forward', true);
 
-    bot.on('end', (reason) => {
-        console.log(`⚠️ فصل: ${reason}. بنحاول بعد دقيقتين...`);
-        setTimeout(() => createBot(name), 120000);
-    });
+      setTimeout(() => {
+        bot.setControlState('forward', false);
+      }, 2000);
+
+    }, 10000);
+  });
+
+  // إعادة تشغيل إذا طلع
+  bot.on('end', () => {
+    console.log('انفصل.. يعيد الدخول 🔁');
+    setTimeout(createBot, 5000);
+  });
+
+  bot.on('error', (err) => {
+    console.log('خطأ:', err.message);
+  });
+
+  // لو فيه تسجيل /login
+  bot.on('messagestr', (msg) => {
+    if (msg.includes('/login')) {
+      bot.chat('/login 123456'); // غير الرقم لو عندك باسورد
+    }
+    if (msg.includes('/register')) {
+      bot.chat('/register 123456 123456');
+    }
+  });
 }
 
-// تشغيل بوت واحد فقط في البداية (عشان ما نلفت نظر الحماية)
-createBot('Hshm_Special_V1');
+createBot();

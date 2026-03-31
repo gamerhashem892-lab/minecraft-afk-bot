@@ -2,8 +2,8 @@ const mineflayer = require('mineflayer')
 
 // إعدادات الاتصال بالسيرفر الجديد
 const botArgs = {
-  host: '46.224.7.62',
-  port: 25801,
+  host: 'Hshm.aternos.me',
+  port: 16821,
   username: 'Warrior_H_2',
   version: false, // خليناها false عشان البوت يكتشف النسخة تلقائياً ويحل مشكلة "Not Supported"
   auth: 'offline',

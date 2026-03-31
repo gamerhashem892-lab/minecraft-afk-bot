@@ -1,50 +1,41 @@
 const mineflayer = require('mineflayer');
 
-function createBot() {
+function createBot(username) {
   const bot = mineflayer.createBot({
     host: 'Hshm.aternos.me',
     port: 16821,
-    username: 'BotAFK',
+    username: username,
     version: false
   });
 
   bot.on('login', () => {
-    console.log('دخل البوت ✅');
+    console.log(`${username} دخل ✅`);
   });
 
   bot.on('spawn', () => {
-    console.log('اشتغل البوت 🎮');
+    console.log(`${username} اشتغل 🎮`);
 
-    // حركة عشوائية كل شوي (عشان ما ينطرد)
+    // حركة عشوائية
     setInterval(() => {
       if (!bot.entity) return;
 
-      const yaw = Math.random() * Math.PI * 2;
-      bot.look(yaw, 0, true);
-
-      bot.setControlState('forward', true);
-
-      setTimeout(() => {
-        bot.setControlState('forward', false);
-      }, 2000);
-
-    }, 10000);
+      bot.setControlState('jump', true);
+      setTimeout(() => bot.setControlState('jump', false), 500);
+    }, 15000);
   });
 
-  // إعادة تشغيل إذا طلع
   bot.on('end', () => {
-    console.log('انفصل.. يعيد الدخول 🔁');
-    setTimeout(createBot, 5000);
+    console.log(`${username} انفصل.. يعيد 🔁`);
+    setTimeout(() => createBot(username), 10000);
   });
 
   bot.on('error', (err) => {
-    console.log('خطأ:', err.message);
+    console.log(`${username} خطأ:`, err.code);
   });
 
-  // لو فيه تسجيل /login
   bot.on('messagestr', (msg) => {
     if (msg.includes('/login')) {
-      bot.chat('/login 123456'); // غير الرقم لو عندك باسورد
+      bot.chat('/login 123456');
     }
     if (msg.includes('/register')) {
       bot.chat('/register 123456 123456');
@@ -52,4 +43,6 @@ function createBot() {
   });
 }
 
-createBot();
+// 🔥 هنا تشغل أكثر من بوت
+createBot('Bot1');
+createBot('Bot2');

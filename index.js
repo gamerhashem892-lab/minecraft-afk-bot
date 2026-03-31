@@ -66,5 +66,5 @@ function createBot(username) {
 }
 
 // 🔥 البوتات بالأسماء اللي طلبتها
-createBot('hashem_Admin-1');
-createBot('hashem_Admin-2');
+createBot('hashem_Admin1');
+createBot('hashem_Admin2');

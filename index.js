@@ -1,7 +1,4 @@
 const mineflayer = require('mineflayer');
-const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
-const { GoalBlock } = goals;
-const mcData = require('minecraft-data')('1.20.1');
 
 let botsOnline = 0;
 const botRoles = {};
@@ -16,7 +13,6 @@ function createBot(username, role) {
   });
 
   botRoles[username] = role;
-  bot.loadPlugin(pathfinder);
 
   bot.on('login', () => {
     console.log(`${username} دخل ✅`);
@@ -26,36 +22,44 @@ function createBot(username, role) {
   bot.on('spawn', () => {
     console.log(`${username} اشتغل 🎮`);
 
-    const defaultMove = new Movements(bot, mcData);
-    bot.pathfinder.setMovements(defaultMove);
-
-    // حركة ذكية + بناء/تكسير/nط
-    setInterval(async () => {
+    // حركة واقعية أمام اللاعبين
+    setInterval(() => {
       if (!bot.entity) return;
 
-      const x = bot.entity.position.x + (Math.random() * 4 - 2);
-      const y = bot.entity.position.y;
-      const z = bot.entity.position.z + (Math.random() * 4 - 2);
+      const actions = ['forward', 'back', 'left', 'right'];
+      const action = actions[Math.floor(Math.random() * actions.length)];
 
-      bot.pathfinder.setGoal(new GoalBlock(Math.floor(x), Math.floor(y), Math.floor(z)));
+      bot.clearControlStates();
+      bot.setControlState(action, true);
 
-      // أحيانًا يبني أو يكسر بلوك
-      try {
-        const blockBelow = bot.blockAt(bot.entity.position.offset(0, -1, 0));
-        if (!blockBelow) return;
-        if (Math.random() > 0.5) {
-          await bot.dig(blockBelow);
-        } else {
-          await bot.placeBlock(blockBelow, bot.entity.position.offset(1, 0, 0));
-        }
-      } catch(e) {}
+      // يلف الرأس عشوائي
+      bot.look(
+        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * Math.PI
+      );
 
-      // نط عشوائي
+      // أحيانًا ينط
       if (Math.random() > 0.7) {
         bot.setControlState('jump', true);
         setTimeout(() => bot.setControlState('jump', false), 500);
       }
-    }, 10000);
+
+      // أحيانًا يبني أو يكسر بلوك تحتهم
+      try {
+        const blockBelow = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+        if (blockBelow) {
+          if (Math.random() > 0.5) {
+            bot.dig(blockBelow).catch(() => {});
+          } else {
+            bot.placeBlock(blockBelow, bot.entity.position.offset(1, 0, 0)).catch(() => {});
+          }
+        }
+      } catch (e) {}
+
+      // يوقف الحركة بعد 2 ثانية
+      setTimeout(() => bot.clearControlStates(), 2000);
+
+    }, 4000);
 
     schedule(bot, username, role);
     monitorServer();

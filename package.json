@@ -6,6 +6,8 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "mineflayer": "^4.15.0"
+    "mineflayer": "^4.0.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "minecraft-data": "^3.0.0"
   }
 }

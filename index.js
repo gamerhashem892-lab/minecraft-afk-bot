@@ -16,7 +16,6 @@ function createBot(username, role) {
   });
 
   botRoles[username] = role;
-
   bot.loadPlugin(pathfinder);
 
   bot.on('login', () => {
@@ -30,25 +29,28 @@ function createBot(username, role) {
     const defaultMove = new Movements(bot, mcData);
     bot.pathfinder.setMovements(defaultMove);
 
-    // حركة عشوائية + بناء/تكسير/nط
-    setInterval(() => {
+    // حركة ذكية + بناء/تكسير/nط
+    setInterval(async () => {
       if (!bot.entity) return;
 
-      // يمشي عشوائي
       const x = bot.entity.position.x + (Math.random() * 4 - 2);
       const y = bot.entity.position.y;
       const z = bot.entity.position.z + (Math.random() * 4 - 2);
+
       bot.pathfinder.setGoal(new GoalBlock(Math.floor(x), Math.floor(y), Math.floor(z)));
 
-      // أحياناً يبني أو يكسر بلوك
-      if (Math.random() > 0.5) {
-        const block = bot.blockAt(bot.entity.position.offset(0, -1, 0));
-        if (block) bot.dig(block).catch(()=>{});
-      } else {
-        bot.placeBlock(bot.blockAt(bot.entity.position.offset(0, -1, 0)), bot.entity.position.offset(1,0,0)).catch(()=>{});
-      }
+      // أحيانًا يبني أو يكسر بلوك
+      try {
+        const blockBelow = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+        if (!blockBelow) return;
+        if (Math.random() > 0.5) {
+          await bot.dig(blockBelow);
+        } else {
+          await bot.placeBlock(blockBelow, bot.entity.position.offset(1, 0, 0));
+        }
+      } catch(e) {}
 
-      // أحياناً ينط
+      // نط عشوائي
       if (Math.random() > 0.7) {
         bot.setControlState('jump', true);
         setTimeout(() => bot.setControlState('jump', false), 500);

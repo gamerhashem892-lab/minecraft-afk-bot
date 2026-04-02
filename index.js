@@ -3,48 +3,43 @@ const mineflayer = require('mineflayer');
 const config = {
   host: 'Hshm.aternos.me',
   port: 16821,
-  version: '1.21.1', 
+  version: '1.21.1', // ثبتنا النسخة عشان يشبك صح
   auth: 'offline'
 };
 
 const bots = {};
-let allowedToRun = { 'hashem_Admin1': true, 'hashem_Admin2': true };
 
 function createBot(username) {
   if (bots[username]) return;
+
   console.log(`🤖 محاولة تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
 
-  // --- نظام الحركة الإجباري (Force Move) ---
   bot.on('spawn', () => {
-    console.log(`✅ ${username} رسبن! جاري تفعيل الحركة...`);
+    console.log(`✅ ${username} متصل الآن ويتحرك!`);
     
-    // تنظيف أي محاولات قديمة
-    if (bot.moveInterval) clearInterval(bot.moveInterval);
-
-    bot.moveInterval = setInterval(() => {
-      // إذا البوت موجود في العالم (مو صنم)
-      if (bot.entity) {
-        const actions = ['forward', 'back', 'left', 'right', 'jump'];
+    bot.clearControlStates();
+    
+    if (!bot.moveInterval) {
+      bot.moveInterval = setInterval(() => {
+        if (!bot.entity) return;
+        
+        const actions = ['forward', 'left', 'right', 'jump'];
         const action = actions[Math.floor(Math.random() * actions.length)];
         
-        // تنفيذ الأكشن
         bot.setControlState(action, true);
         bot.look(Math.random() * Math.PI * 2, 0);
-        
-        // إضافة: حركة اليد (Swing) عشان السيرفر يعرف إنه لاعب حقيقي
-        bot.swingArm('right');
 
         setTimeout(() => {
           if (bot.entity) bot.clearControlStates();
-        }, 1000);
-      }
-    }, 10000); // يتحرك كل 10 ثواني (أسرع وأضمن)
+        }, 1500);
+      }, 3000); 
+    }
   });
 
   bot.on('end', () => {
-    console.log(`❌ ${username} فصل.`);
+    console.log(`❌ ${username} فصل من السيرفر.`);
     if (bot.moveInterval) clearInterval(bot.moveInterval);
     delete bots[username];
   });
@@ -57,38 +52,44 @@ function createBot(username) {
   });
 }
 
-// --- نظام إدارة الدورة (بفارق زمني 15 ثانية) ---
+// --- نظام إدارة الدورة (4 ساعات عمل -> استراحة متبادلة) ---
 async function startLifecycle() {
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-  while (true) {
-    allowedToRun['hashem_Admin1'] = true;
-    createBot('hashem_Admin1');
-    await wait(15000); // انتظار عشان الثاني يدخل صح
 
-    allowedToRun['hashem_Admin2'] = true;
+  while (true) {
+    console.log("🚀 بداية الدورة: تشغيل الاثنين لمدة 4 ساعات...");
+    createBot('hashem_Admin1');
     createBot('hashem_Admin2');
+
     await wait(4 * 60 * 60 * 1000);
 
-    allowedToRun['hashem_Admin1'] = false;
+    console.log("⏳ استراحة Admin1...");
     if (bots['hashem_Admin1']) bots['hashem_Admin1'].quit();
     await wait(90 * 60 * 1000); 
 
-    allowedToRun['hashem_Admin1'] = true;
     createBot('hashem_Admin1');
-    await wait(30000); 
+    await wait(15000); 
 
-    allowedToRun['hashem_Admin2'] = false;
+    console.log("⏳ استراحة Admin2...");
     if (bots['hashem_Admin2']) bots['hashem_Admin2'].quit();
     await wait(90 * 60 * 1000);
+
+    createBot('hashem_Admin2');
+    await wait(15000);
   }
 }
 
-// --- المراقبة الذكية ---
+// --- 🛡️ نظام المراقبة (The Guard) المعدل لدخول الاثنين ---
 setInterval(() => {
-    if (allowedToRun['hashem_Admin1'] && !bots['hashem_Admin1']) createBot('hashem_Admin1');
-    setTimeout(() => {
-        if (allowedToRun['hashem_Admin2'] && !bots['hashem_Admin2']) createBot('hashem_Admin2');
-    }, 10000);
+    // إذا الأول طافي، شغله
+    if (!bots['hashem_Admin1']) {
+        createBot('hashem_Admin1');
+    }
+    // إذا الثاني طافي، شغله (هنا صلحنا المشكلة)
+    if (!bots['hashem_Admin2']) {
+        createBot('hashem_Admin2');
+    }
 }, 60000);
 
+// تشغيل الدورة
 startLifecycle();

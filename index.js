@@ -1,158 +1,102 @@
 const mineflayer = require('mineflayer');
-const express = require('express');
-
-const app = express();
-app.get('/', (req, res) => res.send('System Status: 24/7 ACTIVE 🛡️'));
-app.listen(process.env.PORT || 3000);
 
 const config = {
   host: 'Hshm.aternos.me',
   port: 16821,
-  version: '1.21.1',
+  version: false, // عشان يشبك على أي نسخة تلقائياً
   auth: 'offline'
 };
 
 const bots = {};
-let activeBotsList = [];
 
-// ================= BOT =================
 function createBot(username) {
   if (bots[username]) return;
 
-  console.log(`📡 [${username}] جاري الدخول...`);
+  console.log(`🤖 محاولة تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
 
-  const startActing = () => {
-    if (bot.moveInterval) clearInterval(bot.moveInterval);
-
-    console.log(`🚀 [${username}] بدأ الحركة`);
-
-    bot.moveInterval = setInterval(() => {
-      if (!bot.entity) return;
-
-      try {
-        const actions = ['forward', 'back', 'left', 'right'];
-        const action = actions[Math.floor(Math.random() * actions.length)];
-
-        bot.setControlState(action, true);
-
-        if (Math.random() < 0.5) {
-          bot.setControlState('jump', true);
-        }
-
-        if (Math.random() < 0.3) {
-          bot.setControlState('sneak', true);
-        }
-
-        bot.look(
-          Math.random() * Math.PI * 2,
-          (Math.random() - 0.5) * 0.5,
-          true
-        );
-
-        setTimeout(() => {
-          bot.clearControlStates();
-        }, 1500);
-
-      } catch (err) {}
-    }, 3000);
-
-    // anti-freeze (مهم)
-    bot.jumpInterval = setInterval(() => {
-      if (!bot.entity) return;
-
-      bot.setControlState('jump', true);
-      setTimeout(() => bot.setControlState('jump', false), 200);
-    }, 2000);
-  };
-
   bot.on('spawn', () => {
-    console.log(`✅ [${username}] دخل السيرفر`);
+    console.log(`✅ ${username} متصل الآن ويتحرك!`);
+    
+    // إيقاف أي حركة سابقة لضمان عدم التعليق
+    bot.clearControlStates();
+    
+    // --- نظام الحركة (مفصول ومستقل) ---
+    if (!bot.moveInterval) {
+      bot.moveInterval = setInterval(() => {
+        if (!bot.entity) return;
+        
+        const actions = ['forward', 'left', 'right', 'jump'];
+        const action = actions[Math.floor(Math.random() * actions.length)];
+        
+        // تنفيذ الحركة
+        bot.setControlState(action, true);
+        bot.look(Math.random() * Math.PI * 2, 0);
 
-    setTimeout(() => {
-      bot.chat('/spawn');
-      bot.chat('/lobby');
-    }, 3000);
-
-    setTimeout(startActing, 6000);
+        // يوقف الحركة بعد ثانية عشان يغير اتجاهه (واقعية أكثر)
+        setTimeout(() => {
+          if (bot.entity) bot.clearControlStates();
+        }, 1500);
+      }, 3000); // يقرر حركة جديدة كل 3 ثواني
+    }
   });
 
-  bot.on('end', (reason) => {
-    console.log(`❌ [${username}] فصل: ${reason}`);
-
+  bot.on('end', () => {
+    console.log(`❌ ${username} فصل من السيرفر.`);
     if (bot.moveInterval) clearInterval(bot.moveInterval);
-    if (bot.jumpInterval) clearInterval(bot.jumpInterval);
-
     delete bots[username];
   });
 
-  bot.on('error', (err) => {
-    console.log(`‼️ خطأ في ${username}:`, err.code);
-  });
+  bot.on('error', (err) => console.log(`‼️ خطأ في ${username}:`, err.code));
 
   bot.on('messagestr', (msg) => {
-    if (msg.includes('/login')) {
-      bot.chat('/login 123456');
-    }
-    if (msg.includes('/register')) {
-      bot.chat('/register 123456 123456');
-    }
+    if (msg.includes('/login')) bot.chat('/login 123456');
+    if (msg.includes('/register')) bot.chat('/register 123456 123456');
   });
 }
 
-// ================= CYCLE =================
+// --- نظام إدارة الدورة (4 ساعات عمل -> استراحة متبادلة) ---
 async function startLifecycle() {
-  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   while (true) {
-    console.log("🔄 تشغيل الاثنين");
-
-    activeBotsList = ['hashem_Admin1', 'hashem_Admin2'];
-
+    console.log("🚀 بداية الدورة: تشغيل الاثنين لمدة 4 ساعات...");
     createBot('hashem_Admin1');
     createBot('hashem_Admin2');
 
-    // 4 ساعات
     await wait(4 * 60 * 60 * 1000);
 
-    // Admin1 يطلع
-    console.log("😴 خروج Admin1");
+    // استراحة الأول
+    console.log("⏳ استراحة Admin1...");
+    if (bots['hashem_Admin1']) bots['hashem_Admin1'].quit();
+    await wait(90 * 60 * 1000); 
 
-    activeBotsList = ['hashem_Admin2'];
-
-    if (bots['hashem_Admin1']) {
-      bots['hashem_Admin1'].quit();
-      delete bots['hashem_Admin1'];
-    }
-
-    await wait(90 * 60 * 1000);
-
-    // Admin2 يطلع و Admin1 يرجع
-    console.log("🔄 تبديل");
-
-    activeBotsList = ['hashem_Admin1'];
-
+    // عودة الأول
     createBot('hashem_Admin1');
+    await wait(15000); 
 
-    if (bots['hashem_Admin2']) {
-      bots['hashem_Admin2'].quit();
-      delete bots['hashem_Admin2'];
-    }
-
+    // استراحة الثاني
+    console.log("⏳ استراحة Admin2...");
+    if (bots['hashem_Admin2']) bots['hashem_Admin2'].quit();
     await wait(90 * 60 * 1000);
+
+    // عودة الثاني
+    createBot('hashem_Admin2');
+    await wait(15000);
   }
 }
 
-// ================= GUARD =================
+// --- 🛡️ نظام المراقبة (The Guard) ---
 setInterval(() => {
-  activeBotsList.forEach(name => {
-    if (!bots[name]) {
-      console.log(`🚨 إعادة تشغيل ${name}`);
-      createBot(name);
+    if (!bots['hashem_Admin1'] && !bots['hashem_Admin2']) {
+        console.log("🚨 السيرفر فاضي! إعادة تشغيل الطوارئ...");
+        createBot('hashem_Admin1');
     }
-  });
+    if (Object.keys(bots).length < 1) {
+        createBot('hashem_Admin2');
+    }
 }, 60000);
 
-// ================= START =================
+// تشغيل الدورة الأساسية
 startLifecycle();

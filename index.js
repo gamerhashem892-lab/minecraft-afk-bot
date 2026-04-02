@@ -3,7 +3,7 @@ const mineflayer = require('mineflayer');
 const config = {
   host: 'Hshm.aternos.me',
   port: 16821,
-  version: false, // عشان يشبك على أي نسخة تلقائياً
+  version: '1.21.1', // ثبتنا النسخة عشان يشبك صح
   auth: 'offline'
 };
 
@@ -19,10 +19,8 @@ function createBot(username) {
   bot.on('spawn', () => {
     console.log(`✅ ${username} متصل الآن ويتحرك!`);
     
-    // إيقاف أي حركة سابقة لضمان عدم التعليق
     bot.clearControlStates();
     
-    // --- نظام الحركة (مفصول ومستقل) ---
     if (!bot.moveInterval) {
       bot.moveInterval = setInterval(() => {
         if (!bot.entity) return;
@@ -30,15 +28,13 @@ function createBot(username) {
         const actions = ['forward', 'left', 'right', 'jump'];
         const action = actions[Math.floor(Math.random() * actions.length)];
         
-        // تنفيذ الحركة
         bot.setControlState(action, true);
         bot.look(Math.random() * Math.PI * 2, 0);
 
-        // يوقف الحركة بعد ثانية عشان يغير اتجاهه (واقعية أكثر)
         setTimeout(() => {
           if (bot.entity) bot.clearControlStates();
         }, 1500);
-      }, 3000); // يقرر حركة جديدة كل 3 ثواني
+      }, 3000); 
     }
   });
 
@@ -67,36 +63,33 @@ async function startLifecycle() {
 
     await wait(4 * 60 * 60 * 1000);
 
-    // استراحة الأول
     console.log("⏳ استراحة Admin1...");
     if (bots['hashem_Admin1']) bots['hashem_Admin1'].quit();
     await wait(90 * 60 * 1000); 
 
-    // عودة الأول
     createBot('hashem_Admin1');
     await wait(15000); 
 
-    // استراحة الثاني
     console.log("⏳ استراحة Admin2...");
     if (bots['hashem_Admin2']) bots['hashem_Admin2'].quit();
     await wait(90 * 60 * 1000);
 
-    // عودة الثاني
     createBot('hashem_Admin2');
     await wait(15000);
   }
 }
 
-// --- 🛡️ نظام المراقبة (The Guard) ---
+// --- 🛡️ نظام المراقبة (The Guard) المعدل لدخول الاثنين ---
 setInterval(() => {
-    if (!bots['hashem_Admin1'] && !bots['hashem_Admin2']) {
-        console.log("🚨 السيرفر فاضي! إعادة تشغيل الطوارئ...");
+    // إذا الأول طافي، شغله
+    if (!bots['hashem_Admin1']) {
         createBot('hashem_Admin1');
     }
-    if (Object.keys(bots).length < 1) {
+    // إذا الثاني طافي، شغله (هنا صلحنا المشكلة)
+    if (!bots['hashem_Admin2']) {
         createBot('hashem_Admin2');
     }
 }, 60000);
 
-// تشغيل الدورة الأساسية
+// تشغيل الدورة
 startLifecycle();

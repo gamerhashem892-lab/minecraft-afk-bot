@@ -8,12 +8,10 @@ const config = {
 };
 
 const bots = {};
-// هذا المتغير الجديد هو السر: يمنع المراقبة من تشغيل البوت وقت استراحته
 let allowedToRun = { 'hashem_Admin1': true, 'hashem_Admin2': true };
 
 function createBot(username) {
   if (bots[username]) return;
-
   console.log(`🤖 محاولة تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
@@ -21,7 +19,6 @@ function createBot(username) {
   bot.on('spawn', () => {
     console.log(`✅ ${username} متصل الآن ويتحرك!`);
     bot.clearControlStates();
-    
     if (!bot.moveInterval) {
       bot.moveInterval = setInterval(() => {
         if (!bot.entity) return;
@@ -48,32 +45,33 @@ function createBot(username) {
   });
 }
 
-// --- نظام إدارة الدورة (نفس منطقك مع تحديث حالة المراقبة) ---
+// --- نظام إدارة الدورة (معدل بفاصل زمني للدخول) ---
 async function startLifecycle() {
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   while (true) {
-    console.log("🚀 بداية الدورة: تشغيل الاثنين لمدة 4 ساعات...");
+    console.log("🚀 بداية الدورة: تشغيل الاثنين بفارق زمني...");
     allowedToRun['hashem_Admin1'] = true;
-    allowedToRun['hashem_Admin2'] = true;
-    createBot('hashem_Admin1');
-    createBot('hashem_Admin2');
+    createBot('hashem_Admin1'); // شغل الأول
+    
+    await wait(15000); // انتظر 15 ثانية قبل تشغيل الثاني (هذا هو السر)
 
-    await wait(4 * 60 * 60 * 1000);
+    allowedToRun['hashem_Admin2'] = true;
+    createBot('hashem_Admin2'); // شغل الثاني
+
+    await wait(4 * 60 * 60 * 1000); // 4 ساعات عمل
 
     // استراحة الأول
-    console.log("⏳ استراحة Admin1...");
-    allowedToRun['hashem_Admin1'] = false; // المراقبة ماراح تشغله الحين
+    allowedToRun['hashem_Admin1'] = false;
     if (bots['hashem_Admin1']) bots['hashem_Admin1'].quit();
     await wait(90 * 60 * 1000); 
 
     allowedToRun['hashem_Admin1'] = true;
     createBot('hashem_Admin1');
-    await wait(15000); 
+    await wait(30000); 
 
     // استراحة الثاني
-    console.log("⏳ استراحة Admin2...");
-    allowedToRun['hashem_Admin2'] = false; // المراقبة ماراح تشغله الحين
+    allowedToRun['hashem_Admin2'] = false;
     if (bots['hashem_Admin2']) bots['hashem_Admin2'].quit();
     await wait(90 * 60 * 1000);
 
@@ -83,16 +81,17 @@ async function startLifecycle() {
   }
 }
 
-// --- 🛡️ نظام المراقبة الذكي (يسمع كلام Lifecycle) ---
+// --- 🛡️ نظام المراقبة الذكي ---
 setInterval(() => {
-    // يشغل Admin1 فقط إذا كان مسموح له بالعمل (مو وقت استراحة)
     if (allowedToRun['hashem_Admin1'] && !bots['hashem_Admin1']) {
         createBot('hashem_Admin1');
     }
-    // يشغل Admin2 فقط إذا كان مسموح له بالعمل
-    if (allowedToRun['hashem_Admin2'] && !bots['hashem_Admin2']) {
-        createBot('hashem_Admin2');
-    }
+    // الثاني يشيك عليه بعد 10 ثواني من الأول لتجنب الصدام
+    setTimeout(() => {
+        if (allowedToRun['hashem_Admin2'] && !bots['hashem_Admin2']) {
+            createBot('hashem_Admin2');
+        }
+    }, 10000);
 }, 60000);
 
 startLifecycle();

@@ -1,54 +1,73 @@
 const mineflayer = require('mineflayer');
+const express = require('express');
+
+const app = express();
+app.get('/', (req, res) => res.send('Ultra Stealth Bot: Active 🛠️💎'));
+app.listen(process.env.PORT || 3000);
 
 const config = {
   host: 'Hshm.aternos.me',
   port: 16821,
-  version: false, // عشان يشبك على أي نسخة تلقائياً
+  version: '1.21.1',
   auth: 'offline'
 };
 
 const bots = {};
+let isGlobalBreak = false;
 
 function createBot(username) {
   if (bots[username]) return;
 
-  console.log(`🤖 محاولة تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
 
   bot.on('spawn', () => {
-    console.log(`✅ ${username} متصل الآن ويتحرك!`);
-    
-    // إيقاف أي حركة سابقة لضمان عدم التعليق
+    console.log(`✅ [${username}] بدأ نظام المحاكاة الكاملة (بناء/كسر/حركة).`);
     bot.clearControlStates();
-    
-    // --- نظام الحركة (مفصول ومستقل) ---
-    if (!bot.moveInterval) {
-      bot.moveInterval = setInterval(() => {
-        if (!bot.entity) return;
-        
-        const actions = ['forward', 'left', 'right', 'jump'];
+
+    if (!bot.mainInterval) {
+      bot.mainInterval = setInterval(async () => {
+        if (!bot.entity || isGlobalBreak) return;
+
+        // 1. حركة عشوائية + قفز
+        const actions = ['forward', 'back', 'left', 'right'];
         const action = actions[Math.floor(Math.random() * actions.length)];
         
-        // تنفيذ الحركة
         bot.setControlState(action, true);
+        if (Math.random() > 0.5) bot.setControlState('jump', true);
+        
+        await bot.waitForTicks(20); // انتظر ثانية
+        bot.clearControlStates();
+
+        // 2. وضعية الشيفـت (Sneak)
+        bot.setControlState('sneak', true);
+        await bot.waitForTicks(10);
+
+        // 3. محاكاة البناء والكسر (وهمي أو حقيقي إذا معه بلوكات)
+        // بنخليه يطالع الأرض ويسوي حركة اليد (Swing Arm) كأنه يبني ويكسر
+        const groundBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+        if (groundBlock) {
+            await bot.lookAt(groundBlock.position);
+            bot.swingArm('right'); // حركة اليد للبناء
+            await bot.waitForTicks(5);
+            bot.swingArm('left');  // حركة اليد للكسر
+        }
+
+        bot.setControlState('sneak', false);
+        
+        // التفات عشوائي أخير
         bot.look(Math.random() * Math.PI * 2, 0);
 
-        // يوقف الحركة بعد ثانية عشان يغير اتجاهه (واقعية أكثر)
-        setTimeout(() => {
-          if (bot.entity) bot.clearControlStates();
-        }, 1500);
-      }, 3000); // يقرر حركة جديدة كل 3 ثواني
+      }, 25000 + Math.random() * 10000); // تكرار العملية كل 25-35 ثانية
     }
   });
 
   bot.on('end', () => {
-    console.log(`❌ ${username} فصل من السيرفر.`);
-    if (bot.moveInterval) clearInterval(bot.moveInterval);
+    if (bot.mainInterval) clearInterval(bot.mainInterval);
     delete bots[username];
   });
 
-  bot.on('error', (err) => console.log(`‼️ خطأ في ${username}:`, err.code));
+  bot.on('error', (err) => console.log(`‼️ خطأ ${username}:`, err.code));
 
   bot.on('messagestr', (msg) => {
     if (msg.includes('/login')) bot.chat('/login 123456');
@@ -56,48 +75,31 @@ function createBot(username) {
   });
 }
 
-// --- نظام إدارة الدورة (4 ساعات عمل -> استراحة متبادلة) ---
+// --- نظام الدورة والمراقبة (نفس منطقك السابق) ---
 async function startLifecycle() {
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
   while (true) {
-    console.log("🚀 بداية الدورة: تشغيل الاثنين لمدة 4 ساعات...");
+    isGlobalBreak = false;
     createBot('hashem_Admin1');
     createBot('hashem_Admin2');
+    await wait(4 * 60 * 60 * 1000); 
 
-    await wait(4 * 60 * 60 * 1000);
-
-    // استراحة الأول
-    console.log("⏳ استراحة Admin1...");
+    isGlobalBreak = true;
     if (bots['hashem_Admin1']) bots['hashem_Admin1'].quit();
     await wait(90 * 60 * 1000); 
-
-    // عودة الأول
     createBot('hashem_Admin1');
-    await wait(15000); 
+    await wait(30000); 
 
-    // استراحة الثاني
-    console.log("⏳ استراحة Admin2...");
     if (bots['hashem_Admin2']) bots['hashem_Admin2'].quit();
     await wait(90 * 60 * 1000);
-
-    // عودة الثاني
     createBot('hashem_Admin2');
-    await wait(15000);
   }
 }
 
-// --- 🛡️ نظام المراقبة (The Guard) ---
-// هذا الجزء يفحص كل دقيقة، لو البوت الثاني "اختفى" وما رجع، المراقبة ترجعه فوراً
 setInterval(() => {
-    if (!bots['hashem_Admin1'] && !bots['hashem_Admin2']) {
-        console.log("🚨 السيرفر فاضي! إعادة تشغيل الطوارئ...");
-        createBot('hashem_Admin1');
-    }
-    // لو البوت الثاني فصل لسبب تقني وما رجع في وقته
-    if (Object.keys(bots).length < 1) {
-        createBot('hashem_Admin2');
-    }
+    if (isGlobalBreak) return;
+    if (!bots['hashem_Admin1']) createBot('hashem_Admin1');
+    if (!bots['hashem_Admin2']) createBot('hashem_Admin2');
 }, 60000);
 
 startLifecycle();

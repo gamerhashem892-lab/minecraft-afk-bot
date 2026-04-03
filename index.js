@@ -9,43 +9,40 @@ const config = {
 
 const bots = {};
 
-// ================= BOT =================
 function createBot(username) {
   if (bots[username]) return;
 
-  console.log(`🤖 محاولة تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
 
   bot.on('spawn', () => {
-    console.log(`✅ ${username} دخل ويتحرك`);
+    console.log(`✅ ${username} دخل`);
 
-    bot.clearControlStates();
-
-    // ================= 🔄 اختبار إعادة التشغيل =================
+    // ================= 🔄 نظام إعادة التشغيل =================
     if (username === 'hashem_Admin1' && !bot.testRestart) {
       bot.testRestart = true;
 
-      console.log("⏳ اختبار: إعادة تشغيل بعد 3 دقائق");
+      console.log("⏳ سيتم إعادة التشغيل بعد 3 دقائق");
 
-      // بعد دقيقتين → باقي دقيقة
+      // 1 دقيقة
       setTimeout(() => {
         bot.chat("⚠️ إعادة تشغيل بعد 1 دقيقة!");
       }, 2 * 60 * 1000);
 
-      // بعد دقيقتين ونص → 30 ثانية
+      // 30 ثانية
       setTimeout(() => {
         bot.chat("⚠️ إعادة تشغيل بعد 30 ثانية!");
       }, 2.5 * 60 * 1000);
 
-      // بعد 2:50 → 10 ثواني
+      // 10 ثواني
       setTimeout(() => {
         bot.chat("⚠️ إعادة تشغيل بعد 10 ثواني!");
       }, 2 * 60 * 1000 + 50 * 1000);
 
       // التنفيذ
       setTimeout(() => {
-        bot.chat("/stop"); // الأفضل في Aternos
+        console.log("♻️ جاري إيقاف السيرفر...");
+        bot.chat("/stop");
       }, 3 * 60 * 1000);
     }
 
@@ -58,10 +55,9 @@ function createBot(username) {
         const action = actions[Math.floor(Math.random() * actions.length)];
 
         bot.setControlState(action, true);
-        bot.look(Math.random() * Math.PI * 2, 0);
 
         setTimeout(() => {
-          if (bot.entity) bot.clearControlStates();
+          bot.clearControlStates();
         }, 1500);
 
       }, 3000);
@@ -70,14 +66,15 @@ function createBot(username) {
 
   bot.on('end', () => {
     console.log(`❌ ${username} فصل`);
-
-    if (bot.moveInterval) clearInterval(bot.moveInterval);
-
     delete bots[username];
+
+    setTimeout(() => {
+      createBot(username);
+    }, 10000);
   });
 
-  bot.on('error', (err) => {
-    console.log(`‼️ خطأ في ${username}:`, err.code);
+  bot.on('error', () => {
+    delete bots[username];
   });
 
   bot.on('messagestr', (msg) => {
@@ -86,58 +83,16 @@ function createBot(username) {
   });
 }
 
-// ================= CYCLE =================
-async function startLifecycle() {
-  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+// تشغيل البوتين
+createBot('hashem_Admin1');
 
-  while (true) {
-    console.log("🚀 تشغيل الاثنين 4 ساعات");
+setTimeout(() => {
+  createBot('hashem_Admin2');
+}, 15000);
 
-    createBot('hashem_Admin1');
-    await wait(5000);
-    createBot('hashem_Admin2');
-
-    await wait(4 * 60 * 60 * 1000);
-
-    // خروج Admin1
-    console.log("😴 خروج Admin1");
-
-    if (bots['hashem_Admin1']) {
-      bots['hashem_Admin1'].quit();
-      delete bots['hashem_Admin1'];
-    }
-
-    await wait(90 * 60 * 1000);
-
-    // رجوع Admin1
-    createBot('hashem_Admin1');
-    await wait(10000);
-
-    // خروج Admin2
-    console.log("😴 خروج Admin2");
-
-    if (bots['hashem_Admin2']) {
-      bots['hashem_Admin2'].quit();
-      delete bots['hashem_Admin2'];
-    }
-
-    await wait(90 * 60 * 1000);
-
-    // رجوع Admin2
-    createBot('hashem_Admin2');
-    await wait(10000);
-  }
-}
-
-// ================= GUARD =================
+// مراقبة
 setInterval(() => {
   ['hashem_Admin1', 'hashem_Admin2'].forEach(name => {
-    if (!bots[name]) {
-      console.log(`🚨 إعادة تشغيل ${name}`);
-      createBot(name);
-    }
+    if (!bots[name]) createBot(name);
   });
 }, 60000);
-
-// ================= START =================
-startLifecycle();

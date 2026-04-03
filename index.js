@@ -22,6 +22,34 @@ function createBot(username) {
 
     bot.clearControlStates();
 
+    // ================= 🔄 اختبار إعادة التشغيل =================
+    if (username === 'hashem_Admin1' && !bot.testRestart) {
+      bot.testRestart = true;
+
+      console.log("⏳ اختبار: إعادة تشغيل بعد 3 دقائق");
+
+      // بعد دقيقتين → باقي دقيقة
+      setTimeout(() => {
+        bot.chat("⚠️ إعادة تشغيل بعد 1 دقيقة!");
+      }, 2 * 60 * 1000);
+
+      // بعد دقيقتين ونص → 30 ثانية
+      setTimeout(() => {
+        bot.chat("⚠️ إعادة تشغيل بعد 30 ثانية!");
+      }, 2.5 * 60 * 1000);
+
+      // بعد 2:50 → 10 ثواني
+      setTimeout(() => {
+        bot.chat("⚠️ إعادة تشغيل بعد 10 ثواني!");
+      }, 2 * 60 * 1000 + 50 * 1000);
+
+      // التنفيذ
+      setTimeout(() => {
+        bot.chat("/stop"); // الأفضل في Aternos
+      }, 3 * 60 * 1000);
+    }
+
+    // ================= الحركة =================
     if (!bot.moveInterval) {
       bot.moveInterval = setInterval(() => {
         if (!bot.entity) return;
@@ -66,7 +94,7 @@ async function startLifecycle() {
     console.log("🚀 تشغيل الاثنين 4 ساعات");
 
     createBot('hashem_Admin1');
-    await wait(5000); // مهم عشان يدخل الثاني
+    await wait(5000);
     createBot('hashem_Admin2');
 
     await wait(4 * 60 * 60 * 1000);

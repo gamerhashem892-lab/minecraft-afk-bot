@@ -1,5 +1,7 @@
 const mineflayer = require('mineflayer');
+const axios = require('axios');
 
+// ================= CONFIG =================
 const config = {
   host: 'Hshm.aternos.me',
   port: 16821,
@@ -7,46 +9,65 @@ const config = {
   auth: 'offline'
 };
 
+// 🔥 حط الكوكي هنا
+const COOKIE = "dSd7If5RUVywKU6KXCrX844DtGhNafavSyZUW56o5vBwFpLhMGF9euWSys7pTKgSgl0ZHzSbj2HMXQd1rnkul2sycGCUiLLpkWw";
+
 const bots = {};
 
+// ================= تشغيل السيرفر =================
+async function startServer() {
+  try {
+    console.log("🚀 محاولة تشغيل السيرفر...");
+
+    await axios.get("https://aternos.org/ajax/server/start", {
+      headers: {
+        Cookie: COOKIE,
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    console.log("✅ تم إرسال أمر التشغيل");
+  } catch (err) {
+    console.log("❌ فشل التشغيل:", err.response?.data || err.message);
+  }
+}
+
+// ================= BOT =================
 function createBot(username) {
   if (bots[username]) return;
 
+  console.log(`🤖 تشغيل البوت: ${username}`);
   const bot = mineflayer.createBot({ ...config, username });
   bots[username] = bot;
 
   bot.on('spawn', () => {
     console.log(`✅ ${username} دخل`);
 
-    // ================= 🔄 نظام إعادة التشغيل =================
-    if (username === 'hashem_Admin1' && !bot.testRestart) {
-      bot.testRestart = true;
+    // ===== 🔄 إعادة تشغيل بعد 3 دقائق (تجربة) =====
+    if (username === 'hashem_Admin1' && !bot.didRestart) {
+      bot.didRestart = true;
 
-      console.log("⏳ سيتم إعادة التشغيل بعد 3 دقائق");
+      console.log("⏳ Restart in 3 minutes...");
 
-      // 1 دقيقة
       setTimeout(() => {
-        bot.chat("⚠️ إعادة تشغيل بعد 1 دقيقة!");
+        bot.chat("⚠️ Server restarting in 1 minute!");
       }, 2 * 60 * 1000);
 
-      // 30 ثانية
       setTimeout(() => {
-        bot.chat("⚠️ إعادة تشغيل بعد 30 ثانية!");
+        bot.chat("⚠️ Server restarting in 30 seconds!");
       }, 2.5 * 60 * 1000);
 
-      // 10 ثواني
       setTimeout(() => {
-        bot.chat("⚠️ إعادة تشغيل بعد 10 ثواني!");
+        bot.chat("⚠️ Server restarting in 10 seconds!");
       }, 2 * 60 * 1000 + 50 * 1000);
 
-      // التنفيذ
       setTimeout(() => {
-        console.log("♻️ جاري إيقاف السيرفر...");
+        console.log("♻️ Stopping server...");
         bot.chat("/stop");
       }, 3 * 60 * 1000);
     }
 
-    // ================= الحركة =================
+    // ===== حركة بسيطة =====
     if (!bot.moveInterval) {
       bot.moveInterval = setInterval(() => {
         if (!bot.entity) return;
@@ -73,7 +94,8 @@ function createBot(username) {
     }, 10000);
   });
 
-  bot.on('error', () => {
+  bot.on('error', (err) => {
+    console.log(`‼️ خطأ ${username}:`, err.code);
     delete bots[username];
   });
 
@@ -83,16 +105,24 @@ function createBot(username) {
   });
 }
 
-// تشغيل البوتين
+// ================= تشغيل البوتات =================
 createBot('hashem_Admin1');
 
 setTimeout(() => {
   createBot('hashem_Admin2');
 }, 15000);
 
-// مراقبة
+// ================= مراقبة =================
 setInterval(() => {
   ['hashem_Admin1', 'hashem_Admin2'].forEach(name => {
     if (!bots[name]) createBot(name);
   });
 }, 60000);
+
+// ================= 🔁 تشغيل السيرفر تلقائي =================
+setInterval(() => {
+  startServer();
+}, 60000);
+
+// تشغيل أول مرة
+startServer();
